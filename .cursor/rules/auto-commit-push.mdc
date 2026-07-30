@@ -1,0 +1,32 @@
+---
+description: Auto-commit and push every affected repo after completing changes
+alwaysApply: true
+---
+
+# Auto-commit & push all affected repos
+
+This workspace is several independent git repos (not a monorepo):
+`closet-dashboard`, `custom-closets-websites`, `closet-widget`,
+`closet-scraper`, `basic-closet-demo`. Each has its own `origin` and most
+auto-deploy to Vercel on push to `main`.
+
+After you finish a task that edits files, commit and push WITHOUT waiting to be
+asked again — the user has standing approval for this workspace:
+
+1. For EVERY repo whose working tree changed, run `git add -A` then commit with
+   a concise Conventional Commits message (`feat:`, `fix:`, `chore:`, etc.)
+   describing the "why".
+2. Push each committed repo: `git push origin main` (or `git push -u origin main`
+   if no upstream). Pushing auto-deploys, so this is the deploy step.
+3. If multiple repos changed, commit + push each one separately.
+4. Briefly report each commit hash and confirm the push/deploy.
+
+## Guardrails
+
+- Never commit secrets (`.env`, `.env.local`, credentials). They are gitignored
+  here — keep them that way; warn instead of committing if one appears.
+- Never `git config`, force-push, amend pushed commits, or skip hooks unless the
+  user explicitly asks.
+- If a push fails (missing remote/auth), report it; don't silently skip.
+- If a DB migration was added under `supabase/migrations/`, apply it
+  (`bash scripts/db-migrate.sh`) before pushing the code that depends on it.

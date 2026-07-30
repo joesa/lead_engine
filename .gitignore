@@ -1,0 +1,18 @@
+# Environment (never commit secrets)
+**/.env
+**/.env.local
+**/.env.vercel
+!**/.env.example
+
+# Dependencies & build output
+**/node_modules/
+**/.next/
+**/dist/
+**/.vercel/
+
+# OS / editor
+.DS_Store
+*.log
+
+# Local git worktrees (linked to closet-dashboard, not standalone content)
+/closet-dashboard-redesign-preview/

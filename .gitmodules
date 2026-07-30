@@ -1,0 +1,15 @@
+[submodule "basic-closet-demo"]
+	path = basic-closet-demo
+	url = https://github.com/joesa/basic-closet-demo.git
+[submodule "closet-dashboard"]
+	path = closet-dashboard
+	url = https://github.com/joesa/closet-dashboard.git
+[submodule "closet-scraper"]
+	path = closet-scraper
+	url = https://github.com/joesa/closet-scraper.git
+[submodule "closet-widget"]
+	path = closet-widget
+	url = https://github.com/joesa/closet-widget.git
+[submodule "custom-closets-websites"]
+	path = custom-closets-websites
+	url = https://github.com/joesa/custom-closets-websites.git
