@@ -31,3 +31,28 @@ first and only proceed to `vercel deploy` if the build succeeded.
   and waste build minutes.
 - After deploy, optionally poll status with `vercel list <project-name>`
   (non-streaming) rather than re-running deploy.
+
+## Always migrate, commit, and push completed work
+
+For every completed coding task, finish the repository workflow instead of
+leaving changes only in the local worktree:
+
+1. If an affected project has a database migration mechanism, check for pending
+  migrations and apply them to the configured target. Any migration added or
+  changed by the task must be applied successfully before committing. Never
+  mark a migration as applied without executing it.
+2. Run the focused tests, typecheck, lint, or production build appropriate to
+  the changed surface. Fix task-related failures before proceeding.
+3. Review `git status` and the final diff. Do not stage local secrets such as
+  `.env*`, generated build artifacts, or unrelated user changes unless the user
+  explicitly asks for them.
+4. Commit all task-related changes in every affected repository with a concise,
+  descriptive commit message, then push each current branch to its configured
+  upstream remote.
+5. This workspace uses Git submodules. After pushing changed child repositories,
+  commit and push their updated pointers in the parent `lead_engine` repository.
+6. Verify that every affected repository is clean and synchronized with its
+  upstream branch. Report commit hashes and any migration applied.
+
+Do not deploy merely because changes were pushed. Production deployment still
+requires an explicit user request and the build-first workflow above.
