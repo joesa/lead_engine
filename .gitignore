@@ -14,5 +14,8 @@
 .DS_Store
 *.log
 
+# Local dev-server pids/logs (dev-servers.sh)
+/.dev-servers/
+
 # Local git worktrees (linked to closet-dashboard, not standalone content)
 /closet-dashboard-redesign-preview/
