@@ -164,7 +164,10 @@ start_one() {
       rm -f "$pidfile"
       return 1
     fi
-    if curl -fsS -o /dev/null --max-time 2 "http://localhost:$port/" 2>/dev/null; then
+    # Readiness means the HTTP server accepted and completed a request. A 4xx/5xx
+    # is an application-level failure that belongs in the smoke-test output, not
+    # a reason to wait the full timeout and claim the listener never came up.
+    if curl -sS -o /dev/null --max-time 2 "http://localhost:$port/" 2>/dev/null; then
       echo "  ready:    $name -> http://localhost:$port"
       return 0
     fi
