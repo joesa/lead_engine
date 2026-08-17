@@ -19,3 +19,6 @@
 
 # Local git worktrees (linked to closet-dashboard, not standalone content)
 /closet-dashboard-redesign-preview/
+
+# one-off admin/scratch scripts
+scripts/tmp/
