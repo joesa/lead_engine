@@ -66,6 +66,16 @@ done
 [[ -n "$REPO" ]] || usage 1
 [[ "$REPO" == */* ]] || die "repo must look like 'org/model-GGUF', got '$REPO'"
 
+# Easy mistake: passing the quant Ollama-style as part of the repo name.
+if [[ "$REPO" == *:* ]]; then
+  if [[ $LIST_ONLY -eq 1 ]]; then
+    die "--list takes the repo only -- drop the ':' suffix:
+  $0 --list ${REPO%%:*}"
+  fi
+  die "repo and quant are separate arguments, not 'repo:quant':
+  $0 ${REPO%%:*} ${REPO#*:}"
+fi
+
 # ---------------------------------------------------------------- deps -------
 need() { command -v "$1" >/dev/null 2>&1 || die "$1 not found. $2"; }
 
