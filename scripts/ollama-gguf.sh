@@ -23,6 +23,18 @@ die()  { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 info() { printf '\033[36m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[33mwarn:\033[0m %s\n' "$*" >&2; }
 
+# Under git-bash on Windows, $PATH-style args are POSIX paths (/c/Users/...)
+# but `ollama` is a native Windows binary that can't resolve them -- it can't
+# find the file, silently treats FROM's value as a model name to pull instead,
+# and fails with a confusing "invalid model name" rather than a file error.
+to_ollama_path() {
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$1"
+  else
+    printf '%s' "$1"
+  fi
+}
+
 usage() {
   sed -n '3,19p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
@@ -64,9 +76,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -n "$REPO" ]] || usage 1
-[[ "$REPO" == */* ]] || die "repo must look like 'org/model-GGUF', got '$REPO'"
 
 # Easy mistake: passing the quant Ollama-style as part of the repo name.
+# Checked before the org/model-GGUF shape check below so this more specific
+# hint wins even when the repo also lacks an 'org/' prefix.
 if [[ "$REPO" == *:* ]]; then
   if [[ $LIST_ONLY -eq 1 ]]; then
     die "--list takes the repo only -- drop the ':' suffix:
@@ -75,6 +88,8 @@ if [[ "$REPO" == *:* ]]; then
   die "repo and quant are separate arguments, not 'repo:quant':
   $0 ${REPO%%:*} ${REPO#*:}"
 fi
+
+[[ "$REPO" == */* ]] || die "repo must look like 'org/model-GGUF', got '$REPO'"
 
 # ---------------------------------------------------------------- deps -------
 need() { command -v "$1" >/dev/null 2>&1 || die "$1 not found. $2"; }
@@ -125,7 +140,9 @@ info "dir     $DEST"
 mkdir -p "$DEST"
 info "Downloading (resumes if interrupted)..."
 hf download "$REPO" \
-  --include "${QUANT}/*.gguf" "${QUANT}*.gguf" "*${QUANT}*.gguf" \
+  --include "${QUANT}/*.gguf" \
+  --include "${QUANT}*.gguf" \
+  --include "*${QUANT}*.gguf" \
   --local-dir "$DEST" \
   "${HF_TOKEN_ARG[@]}"
 
@@ -174,12 +191,12 @@ info "GGUF    $GGUF ($(du -h "$GGUF" | cut -f1))"
 # --------------------------------------------------------------- create ------
 if [[ $DO_CREATE -eq 0 ]]; then
   info "Skipping ollama create (--no-create). Modelfile line would be:"
-  printf '  FROM %s\n' "$GGUF"
+  printf '  FROM %s\n' "$(to_ollama_path "$GGUF")"
   exit 0
 fi
 
 MODELFILE="${DEST}/Modelfile"
-printf 'FROM %s\n' "$GGUF" > "$MODELFILE"
+printf 'FROM %s\n' "$(to_ollama_path "$GGUF")" > "$MODELFILE"
 
 info "ollama create $MODEL"
 ollama create "$MODEL" -f "$MODELFILE"
