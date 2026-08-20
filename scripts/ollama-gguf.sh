@@ -100,7 +100,9 @@ need hf "Install it with: pip install -U 'huggingface_hub[cli]'"
 
 # --------------------------------------------------------------- naming ------
 # unsloth/Qwen3-Coder-Next-GGUF + Q4_1  ->  qwen3-coder-next:q4_1
-slug() { tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9._-' '-' | sed 's/-\{2,\}/-/g; s/^-//; s/-$//'; }
+# Dots become hyphens rather than disappearing, so Qwen3.8 -> qwen3-8 keeps
+# the version boundary readable.
+slug() { tr '[:upper:]' '[:lower:]' | tr '.' '-' | tr -c 'a-z0-9_-' '-' | sed 's/-\{2,\}/-/g; s/^-//; s/-$//'; }
 
 if [[ -z "$NAME" ]]; then
   NAME="$(printf '%s' "${REPO##*/}" | sed 's/[-_.]\{0,1\}GGUF$//I' | slug)"
