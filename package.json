@@ -1,0 +1,32 @@
+{
+  "name": "lead-engine",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "basic-closet-demo",
+    "closet-dashboard",
+    "closet-scraper",
+    "closet-widget",
+    "custom-closets-websites"
+  ],
+  "scripts": {
+    "dev:dashboard": "npm run dev -w closet-dashboard",
+    "dev:widget": "npm run dev -w closet-widget",
+    "dev:sites": "npm run dev -w custom-closets-websites",
+    "dev:demo": "npm run dev -w basic-closet-demo",
+    "build:widget": "npm run build -w closet-widget",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test --workspaces --if-present -- --coverage",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}
