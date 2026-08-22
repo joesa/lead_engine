@@ -1,59 +1,84 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Widget to Dashboard Flow", () => {
-  test("widget loads and submits lead", async ({ page }) => {
+  test("landing page renders the embedded quote widget", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/DitchTheForm/);
 
-    const widget = page.locator("closet-quote-widget");
-    await expect(widget).toBeVisible();
-
-    await page.waitForTimeout(1000);
+    // <closet-quote-widget> is server-rendered as an empty, zero-height custom
+    // element; it only gets a box once public/widget.js upgrades it and mounts
+    // its shadow root. Waiting on the upgrade is the real readiness signal —
+    // asserting visibility first just races the bundle.
+    await page.waitForFunction(
+      () => customElements.get("closet-quote-widget") !== undefined
+    );
+    await expect(page.locator("closet-quote-widget")).toBeVisible();
   });
 
-  test("lead submission triggers API call", async ({ page, request }) => {
+  // /api/send-lead emails the contractor and can text them via Twilio, so an
+  // e2e run must not drive it to success. Its rejection path is the part worth
+  // pinning: contractorId became mandatory to close an open-relay hole, and a
+  // regression there is silent from the outside.
+  test("lead submission rejects a payload with no contractor", async ({ request }) => {
     const response = await request.post("/api/send-lead", {
       data: {
-        name: "Test User",
-        email: "test@example.com",
-        phone: "555-555-5555",
-        linearFeet: 10,
-        roomType: "closet",
-        finish: "laminate",
-        message: "Test lead",
+        customerName: "Test User",
+        customerEmail: "test@example.com",
+        customerPhone: "555-555-5555",
+        range: { low: 1000, high: 2000 },
       },
     });
 
-    expect(response.status()).toBeGreaterThanOrEqual(200);
+    expect(response.status()).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: expect.stringContaining("contractorId"),
+    });
   });
 
-  test("quote calculation returns valid response", async ({ page, request }) => {
+  test("quote calculation rejects a payload with no contractor", async ({ request }) => {
+    const response = await request.post("/api/calculate", {
+      data: { unitQuantity: 10, roomType: "Walk-In Closet", finishType: "standard" },
+    });
+
+    expect(response.status()).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: expect.stringContaining("contractorId"),
+    });
+  });
+
+  // The entitlement gate runs ahead of the contractor lookup, so an id that was
+  // never provisioned is refused as unsubscribed (402) rather than 404.
+  test("quote calculation gates an unentitled contractor", async ({ request }) => {
     const response = await request.post("/api/calculate", {
       data: {
         contractorId: "test-contractor",
-        linearFeet: 10,
-        roomType: "closet",
-        finish: "laminate",
-        addons: [],
+        unitQuantity: 10,
+        roomType: "Walk-In Closet",
+        finishType: "standard",
+        selectedAddOns: [],
       },
     });
 
-    const json = await response.json();
-    expect(json).toHaveProperty("minPrice");
-    expect(json).toHaveProperty("maxPrice");
+    expect(response.status()).toBe(402);
+    expect(await response.json()).toMatchObject({
+      error: "subscription_required",
+      disabled: true,
+    });
   });
 });
 
 test.describe("Dashboard Authentication", () => {
   test("login page loads", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.getByRole("heading", { name: /sign in/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /welcome back/i })
+    ).toBeVisible();
   });
 
   test("signup page loads", async ({ page }) => {
     await page.goto("/signup");
     await expect(
-      page.getByRole("heading", { name: /create account/i })
+      page.getByRole("heading", { name: /create your account/i })
     ).toBeVisible();
   });
 });
